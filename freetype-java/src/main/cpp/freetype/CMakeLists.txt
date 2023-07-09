@@ -112,81 +112,101 @@
 # CMake >= 3 is requested.
 cmake_minimum_required(VERSION 3.0)
 
-if (NOT CMAKE_VERSION VERSION_LESS 3.3)
-  # Allow symbol visibility settings also on static libraries. CMake < 3.3
-  # only sets the property on a shared library build.
-  cmake_policy(SET CMP0063 NEW)
+################################################################
+##### 判断cmake的版本，如果大于3.3版本会设置一些策略
+#if (NOT CMAKE_VERSION VERSION_LESS 3.3)
+#  # Allow symbol visibility settings also on static libraries. CMake < 3.3
+#  # only sets the property on a shared library build.
+#  cmake_policy(SET CMP0063 NEW)
+#
+#  # Support new IN_LIST if() operator.
+#  cmake_policy(SET CMP0057 NEW)
+#endif ()
 
-  # Support new IN_LIST if() operator.
-  cmake_policy(SET CMP0057 NEW)
-endif ()
-
+################################################################
+# 引入cmake相关的一些模块
 include(CheckIncludeFile)
 include(CMakeDependentOption)
 
+################################################################
+##### 苹果系统的相关配置
 # CMAKE_TOOLCHAIN_FILE must be set before `project' is called, which
 # configures the base build environment and references the toolchain file
-if (APPLE)
-  if (DEFINED IOS_PLATFORM)
-    if (NOT "${IOS_PLATFORM}" STREQUAL "OS"
-        AND NOT "${IOS_PLATFORM}" STREQUAL "SIMULATOR"
-        AND NOT "${IOS_PLATFORM}" STREQUAL "SIMULATOR64")
-      message(FATAL_ERROR
-        "IOS_PLATFORM must be set to either OS, SIMULATOR, or SIMULATOR64")
-    endif ()
-    if (NOT "${CMAKE_GENERATOR}" STREQUAL "Xcode")
-      message(AUTHOR_WARNING
-        "You should use Xcode generator with IOS_PLATFORM enabled to get Universal builds.")
-    endif ()
-    if (BUILD_SHARED_LIBS)
-      message(FATAL_ERROR
-        "BUILD_SHARED_LIBS can not be on with IOS_PLATFORM enabled")
-    endif ()
-    if (BUILD_FRAMEWORK)
-      message(FATAL_ERROR
-        "BUILD_FRAMEWORK can not be on with IOS_PLATFORM enabled")
-    endif ()
+#if (APPLE)
+#  if (DEFINED IOS_PLATFORM)
+#    if (NOT "${IOS_PLATFORM}" STREQUAL "OS"
+#            AND NOT "${IOS_PLATFORM}" STREQUAL "SIMULATOR"
+#            AND NOT "${IOS_PLATFORM}" STREQUAL "SIMULATOR64")
+#      message(FATAL_ERROR
+#              "IOS_PLATFORM must be set to either OS, SIMULATOR, or SIMULATOR64")
+#    endif ()
+#    if (NOT "${CMAKE_GENERATOR}" STREQUAL "Xcode")
+#      message(AUTHOR_WARNING
+#              "You should use Xcode generator with IOS_PLATFORM enabled to get Universal builds.")
+#    endif ()
+#    if (BUILD_SHARED_LIBS)
+#      message(FATAL_ERROR
+#              "BUILD_SHARED_LIBS can not be on with IOS_PLATFORM enabled")
+#    endif ()
+#    if (BUILD_FRAMEWORK)
+#      message(FATAL_ERROR
+#              "BUILD_FRAMEWORK can not be on with IOS_PLATFORM enabled")
+#    endif ()
+#
+#    # iOS only uses static libraries
+#    set(BUILD_SHARED_LIBS OFF)
+#
+#    set(CMAKE_TOOLCHAIN_FILE
+#            ${CMAKE_SOURCE_DIR}/builds/cmake/iOS.cmake)
+#  endif ()
+#else ()
+#  if (DEFINED IOS_PLATFORM)
+#    message(FATAL_ERROR "IOS_PLATFORM is not supported on this platform")
+#  endif ()
+#endif ()
 
-    # iOS only uses static libraries
-    set(BUILD_SHARED_LIBS OFF)
-
-    set(CMAKE_TOOLCHAIN_FILE
-      ${CMAKE_SOURCE_DIR}/builds/cmake/iOS.cmake)
-  endif ()
-else ()
-  if (DEFINED IOS_PLATFORM)
-    message(FATAL_ERROR "IOS_PLATFORM is not supported on this platform")
-  endif ()
-endif ()
-
-
+################################################################
+##### 项目名称
 project(freetype C)
 
+################################################################
+##### 版本号变量
 set(VERSION_MAJOR "2")
 set(VERSION_MINOR "13")
 set(VERSION_PATCH "0")
 
+################################################################
+##### 替换builds/unix/configure.raw文件中的版本号字符信息
 # Generate LIBRARY_VERSION and LIBRARY_SOVERSION.
-set(LIBTOOL_REGEX "version_info='([0-9]+):([0-9]+):([0-9]+)'")
-file(STRINGS "${PROJECT_SOURCE_DIR}/builds/unix/configure.raw"
-  VERSION_INFO
-  REGEX ${LIBTOOL_REGEX})
-string(REGEX REPLACE
-  ${LIBTOOL_REGEX} "\\1"
-  LIBTOOL_CURRENT "${VERSION_INFO}")
-string(REGEX REPLACE
-  ${LIBTOOL_REGEX} "\\2"
-  LIBTOOL_REVISION "${VERSION_INFO}")
-string(REGEX REPLACE
-  ${LIBTOOL_REGEX} "\\3"
-  LIBTOOL_AGE "${VERSION_INFO}")
+#set(LIBTOOL_REGEX "version_info='([0-9]+):([0-9]+):([0-9]+)'")
+#file(STRINGS "${PROJECT_SOURCE_DIR}/builds/unix/configure.raw"
+#        VERSION_INFO
+#        REGEX ${LIBTOOL_REGEX})
+#string(REGEX REPLACE
+#        ${LIBTOOL_REGEX} "\\1"
+#        LIBTOOL_CURRENT "${VERSION_INFO}")
+#string(REGEX REPLACE
+#        ${LIBTOOL_REGEX} "\\2"
+#        LIBTOOL_REVISION "${VERSION_INFO}")
+#string(REGEX REPLACE
+#        ${LIBTOOL_REGEX} "\\3"
+#        LIBTOOL_AGE "${VERSION_INFO}")
 
+################################################################
+##### 如下面说的，是libtool在unix平台的一些操作
 # This is what libtool does internally on Unix platforms.
-math(EXPR LIBRARY_SOVERSION "${LIBTOOL_CURRENT} - ${LIBTOOL_AGE}")
-set(LIBRARY_VERSION "${LIBRARY_SOVERSION}.${LIBTOOL_AGE}.${LIBTOOL_REVISION}")
+#math(EXPR LIBRARY_SOVERSION "${LIBTOOL_CURRENT} - ${LIBTOOL_AGE}")
+#set(LIBRARY_VERSION "${LIBRARY_SOVERSION}.${LIBTOOL_AGE}.${LIBTOOL_REVISION}")
 
+################################################################
+##### 依赖的配置检测，freetype库根据其模块功能，可能会依赖到zlib、bzip2、png、harfbuzz、brotli这几个库
 # External dependency library detection is automatic.  See the notes at the
 # top of this file, for how to force or disable dependencies completely.
+# option：相当于C语言中的宏条件编译，格式为：option(<variable> "<help_text>" [value])
+# variable：定义选项名称
+# help_text：说明选项的含义
+# value:定义选项默认状态，一般是OFF或者ON，除去ON之外，其他所有值都为认为是OFF。
+# cmake_dependent_option：提供依赖于其它选项的宏，格式为：cmake_dependent_option(<option> "<help_text>" <value> <depends> <force>)
 option(FT_DISABLE_ZLIB
   "Disable use of system zlib and use internal zlib library instead." OFF)
 cmake_dependent_option(FT_REQUIRE_ZLIB
@@ -220,6 +240,8 @@ cmake_dependent_option(FT_REQUIRE_BROTLI
 option(FT_ENABLE_ERROR_STRINGS
   "Enable support for meaningful error descriptions." OFF)
 
+################################################################
+##### 判断构建过程生成的build目录是否和源码目录一样，如果一样则提示（会混淆和源码的文件导致无法区分）
 # Disallow in-source builds
 if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
   message(FATAL_ERROR
@@ -232,11 +254,13 @@ if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
     "  cmake -E remove_directory CMakeFiles")
 endif ()
 
-
+################################################################
+##### 对CMAKE_MODULE_PATH列表进行操作，添加一个freetype源码的目录
 # Add local cmake modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/builds/cmake)
 
-
+################################################################
+##### 苹果平台相关的一些配置，设置一些变量值
 if (BUILD_FRAMEWORK)
   if (NOT "${CMAKE_GENERATOR}" STREQUAL "Xcode")
     message(FATAL_ERROR
@@ -246,11 +270,14 @@ if (BUILD_FRAMEWORK)
   set(BUILD_SHARED_LIBS ON)
 endif ()
 
-
+################################################################
+##### 引入cmake的FindPkgConfig.cmake模块
 # Find dependencies
 include(FindPkgConfig)
 
-if (NOT FT_DISABLE_HARFBUZZ)
+################################################################
+##### 搜索对应的依赖库
+#[[if (NOT FT_DISABLE_HARFBUZZ)
   set(HARFBUZZ_MIN_VERSION "2.0.0")
   if (FT_REQUIRE_HARFBUZZ)
     find_package(HarfBuzz ${HARFBUZZ_MIN_VERSION} REQUIRED)
@@ -294,8 +321,9 @@ if (NOT FT_DISABLE_BROTLI)
   else ()
     find_package(BrotliDec)
   endif ()
-endif ()
+endif ()]]
 
+################################################################
 # Create the configuration file
 if (UNIX)
   check_include_file("unistd.h" HAVE_UNISTD_H)
@@ -328,7 +356,8 @@ if (NOT (ORIGINAL_FTCONFIG_H STREQUAL FTCONFIG_H))
   file(WRITE "${FTCONFIG_H_NAME}" "${FTCONFIG_H}")
 endif ()
 
-
+################################################################
+##### 根据依赖库的配置项，修改include/freetype/config/ftoption.h头文件，相当于打开相关的注释
 # Create the options file
 file(READ "${PROJECT_SOURCE_DIR}/include/freetype/config/ftoption.h"
   FTOPTION_H)
@@ -374,11 +403,11 @@ if (NOT (ORIGINAL_FTOPTION_H STREQUAL FTOPTION_H))
   file(WRITE "${FTOPTION_H_NAME}" "${FTOPTION_H}")
 endif ()
 
-
+################################################################
+##### 使用变量记录源码路径
 file(GLOB PUBLIC_HEADERS "include/ft2build.h" "include/freetype/*.h")
 file(GLOB PUBLIC_CONFIG_HEADERS "include/freetype/config/*.h")
 file(GLOB PRIVATE_HEADERS "include/freetype/internal/*.h")
-
 
 set(BASE_SRCS
   src/autofit/autofit.c
@@ -423,6 +452,8 @@ set(BASE_SRCS
   src/winfonts/winfnt.c
 )
 
+########################################################################
+##### 根据对应的平台，追加源码文件
 if (UNIX)
   list(APPEND BASE_SRCS "builds/unix/ftsystem.c")
 elseif (WIN32)
@@ -450,7 +481,8 @@ if (NOT DISABLE_FORCE_DEBUG_POSTFIX)
   set(CMAKE_DEBUG_POSTFIX d)
 endif ()
 
-
+########################################################################
+##### 添加名为freetype的库，库的类型没有设置，则通过全局的BUILD_SHARED_LIBS的FALSE或TRUE来指定（BUILD_SHARED_LIBS变量默认为ON）
 add_library(freetype
   ${PUBLIC_HEADERS}
   ${PUBLIC_CONFIG_HEADERS}
@@ -458,10 +490,14 @@ add_library(freetype
   ${BASE_SRCS}
 )
 
+########################################################################
+##### 设置目标的属性，用于后续的输出
 set_target_properties(
   freetype PROPERTIES
     C_VISIBILITY_PRESET hidden)
 
+########################################################################
+##### 用于向target添加编译定义
 target_compile_definitions(
   freetype PRIVATE FT2_BUILD_LIBRARY)
 
@@ -480,6 +516,8 @@ if (BUILD_SHARED_LIBS)
     SOVERSION ${LIBRARY_SOVERSION})
 endif ()
 
+################################################################
+##### target_include_directories：指定在编译给定target时要使用的包含目录，名称必须为add_executable或add_library之类的命令创建的
 # Pick up ftconfig.h and ftoption.h generated above, first.
 target_include_directories(
   freetype
@@ -508,6 +546,8 @@ if (BUILD_FRAMEWORK)
   )
 endif ()
 
+################################################################
+##### 创建freetype-interface库
 # 'freetype-interface' is an interface library, to be accessed with
 # `EXPORT_NAME Freetype::Freetype`.  This is the target name provided by
 # CMake's `FindFreetype.cmake`, so we provide it for compatibility.
@@ -521,6 +561,8 @@ set(PKGCONFIG_REQUIRES_PRIVATE "")
 set(PKGCONFIG_LIBS "-L\${libdir} -lfreetype")
 set(PKGCONFIG_LIBS_PRIVATE "")
 
+########################################################################
+##### 根据cmake找到的依赖库结果（是否找到），找到的情况就链接到freetype
 if (ZLIB_FOUND)
   target_link_libraries(freetype PRIVATE ${ZLIB_LIBRARIES})
   target_include_directories(freetype PRIVATE ${ZLIB_INCLUDE_DIRS})
@@ -553,7 +595,9 @@ if (BROTLIDEC_FOUND)
   list(APPEND PKGCONFIG_REQUIRES_PRIVATE "libbrotlidec")
 endif ()
 
-
+################################################################
+##### GNUInstallDirs也是cmake的一部分， GNUInstallDirs.cmake
+##### install()命令：用于指定文件的输出路径，也就是安装到目标路径下
 # Installation
 include(GNUInstallDirs)
 
@@ -650,7 +694,8 @@ if (NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
     COMPONENT headers)
 endif ()
 
-
+########################################################################
+##### 貌似是一些打包相关的处理
 # Packaging
 set(CPACK_PACKAGE_NAME ${CMAKE_PROJECT_NAME})
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The FreeType font rendering library.")
