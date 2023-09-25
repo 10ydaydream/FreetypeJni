@@ -24,21 +24,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void test() {
-        binding.etDrawEdit.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                Log.i(TAG, "beforeTextChanged: ");
-            }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                Log.i(TAG, "onTextChanged: ");
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                Log.i(TAG, "afterTextChanged: ");
-            }
-        });
     }
 }
