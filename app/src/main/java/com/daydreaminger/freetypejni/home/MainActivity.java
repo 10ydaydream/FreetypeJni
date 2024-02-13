@@ -1,13 +1,11 @@
 package com.daydreaminger.freetypejni.home;
 
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.daydreaminger.freetype.FreetypeNative;
 import com.daydreaminger.freetypejni.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
@@ -24,6 +22,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void test() {
-
+        FreetypeNative.loadFreetype();
     }
 }

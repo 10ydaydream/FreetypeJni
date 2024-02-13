@@ -1,52 +1,21 @@
+# bridge native freetype
 cmake_minimum_required(VERSION 3.4.1)
-project("freetypeJni")
+project("FreetypeWrapper")
 
-#[[
-有两种方式处理吧：
-1. 手动交叉编译Freetype以及其依赖库的so文件，最终分成多个不同的动态库
-    * 这样编译出来的动态库可以复用
-    * 需要小部分调整项目自带的CMakeLists.txt文件之后再进行交叉编译
-2. 引入源码，通过Android项目的cmake进行编译，生成一个整合的动态库
-    * 编译出来的动态库文件会相对来说比较大
-    * 需要手动引入源码，然后根据项目自带的CMakeLists.txt文件，进行一些相关的配置、调整
+# 引入freetype的头文件
+include_directories(3rdparty/freetype/include)
+link_directories(../jniLibs/${ANDROID_ABI}/)
 
-难点
-* 需要熟悉项目本身提供的CMakeLists.txt的编译配置过程，才能在其基础上来自定义编译过程
-* CMakeLists.txt文件中涉及一些目标平台相关的配置，以及对源码文件的一些特殊处理
--- 基本上都是对已有CMakeLists.txt的改造；
--- 也就是主要的移植难点吧，需要针对不同平台的特殊处理；
-]]
-
-####################################################################################################
-# 这里使用添加add_subdirectory()的方式，也就是修改项目自带的CMakeLists.txt来完成依赖库的编译
-
-# zlib，NDK也提供了编译后的动态库、静态库，可以直接引用， 名字就是z
-#[[find_library(
-        zlib
-        z
-)]]
-add_subdirectory(3rdparty/zlib)
-add_subdirectory(3rdparty/libpng)
-add_subdirectory(3rdparty/freetype)
-
-
-# test
-if (ANDROID)
-    message("ANDROID")
-endif ()
-if (UNIX)
-    message("UNIX")
-elseif (WIN32)
-    message("WIN32")
-else ()
-    message("...")
-endif ()
+# jni的桥接文件
+file(GLOB FT_HEADERS "include/")
+file(GLOB FT_SRCS "src/")
 
 add_library(
         ${PROJECT_NAME}
         SHARED
-
-        freetype_jni.cpp
+        ${FT_HEADERS}
+        ${FT_SRCS}
+        freetype_bridge.cpp
 )
 
 find_library(
@@ -54,7 +23,22 @@ find_library(
         log
 )
 
+# 引入本地所需的动态库或静态库
+# 设置变量
+# CMAKE_CXX_FLAGS 表示会将 C++ 的参数传给编译器
+# CMAKE_C_FLAGS 表示会将 C 参数传给编译器
+# 参数设置 : 传递 CMAKE_CXX_FLAGS C+= 参数给编译器时 , 在 该参数后面指定库的路径
+#   CMAKE_SOURCE_DIR 指的是当前的文件地址
+#   -L 参数指定动态库的查找路径
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}")
+# 引入动态库或静态库
+#add_library(add STATIC IMPORTED)
+# 设置函数库的导入路径
+#set_target_properties(add PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../jniLibs/armeabi-v7a/libfreetype.a)
+
 target_link_libraries(
         ${PROJECT_NAME}
+
         ${log-lib}
+        libfreetype.a
 )
