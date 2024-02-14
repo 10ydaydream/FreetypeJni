@@ -7,17 +7,24 @@ include_directories(3rdparty/freetype/include)
 
 # cmake文档描述说尽量不要使用link_directories()方法
 # link_directories()指令要放在add_library指令之前
-#link_directories(../jniLibs/${ANDROID_ABI}/)
+# link_directories(../jniLibs/${ANDROID_ABI}/)
 
 # jni的桥接文件
-file(GLOB FT_HEADERS "include/")
-file(GLOB FT_SRCS "src/")
+# file语法 GLOB_RECURSE  表示递归遍历获取该目录下所有的文件，包含子目录
+# file(GLOB FT_HEADERS "include/")
+file(GLOB_RECURSE JNI_ROOT_SRC "include/")
+file(GLOB_RECURSE JNI_SDK_SRC "src/")
+
+# 3、Jni层cpp源码
+set(JNI_SOURCE_FILE
+        ${JNI_ROOT_SRC}
+        ${JNI_SDK_SRC}
+)
 
 add_library(
         ${PROJECT_NAME}
         SHARED
-        ${FT_HEADERS}
-        ${FT_SRCS}
+        ${JNI_SOURCE_FILE}
         freetype_bridge.cpp
 )
 
