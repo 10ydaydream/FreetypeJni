@@ -2,6 +2,9 @@
 
 Freetype2内部提供有CMakeLists.txt文件用于编译，移植主要是在该文件的基础上进行删减、调整，以便于可以通过NDK的cmake来进行编译
 
+## 参考
+[链接动态库和静态库](https://www.jianshu.com/p/28901909ae9e)
+
 ## freetype2的CMakeLists.txt文件分析
 
 Freetype2内部提供有CMakeLists.txt文件包含了完整的编译流程控制，可以通读一遍，移植的时候需要注意（也是后面调整）的有几点

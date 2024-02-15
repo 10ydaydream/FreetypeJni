@@ -1,22 +1,13 @@
 #include <jni.h>
 #include <string>
 
-#define JNI_DEBUG
-
-#ifdef JNI_DEBUG
-
 #ifndef LOG_TAG
 #define LOG_TAG "JNI_DEBUG"
 #endif
 
 #include <jni.h>
 #include <android/log.h>
-
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-
-#endif
+#include "android_log_util.h"
 
 // JNI桥接层加载
 
@@ -45,13 +36,13 @@ JNIEXPORT void JNICALL
 Java_com_daydreaminger_freetype_FreetypeNative_loadFreetype(JNIEnv *env, jclass clazz) {
     long error = FT_Init_FreeType(&library);
     if (error) {
-        LOGD("error");
+        LOGD(LOG_TAG, "error");
     }
-    LOGD("complete.");
+    LOGD(LOG_TAG, "complete.");
 
     int amajor = 0;
     int aminor = 0;
     int apatch = 0;
     FT_Library_Version(library, &amajor, & aminor,&apatch);
-    LOGD(">>> amajor = %d, aminor = %d, apatch = %d", amajor, aminor, apatch);
+    LOGD(LOG_TAG, ">>> amajor = %d, aminor = %d, apatch = %d", amajor, aminor, apatch);
 }

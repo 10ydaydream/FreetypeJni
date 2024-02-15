@@ -24,6 +24,7 @@ set(JNI_SOURCE_FILE
 add_library(
         ${PROJECT_NAME}
         SHARED
+        android_log_util.h
         ${JNI_SOURCE_FILE}
         freetype_bridge.cpp
 )
