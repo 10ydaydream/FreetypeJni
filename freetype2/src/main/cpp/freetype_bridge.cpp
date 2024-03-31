@@ -22,12 +22,16 @@ FT_Library library;
 //    JNIEnv *env = nullptr;
 //    //获取JniEnv
 //    if (vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
+//        // JNI ERROR
 //        return JNI_ERR;
 //    }
 //
 //    // TODO 通过env->RegisterNatives()注册方法映射表JNINativeMethod
+////    env->RegisterNatives(
+////
+////            )
 //
-//    //返回jni 的版本
+//    //返回JNI的版本
 //    return JNI_VERSION_1_6;
 //}
 

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# 交叉编译脚本
+# 需要NDK编译工具链来交叉编译Android平台的静态库或者动态库
+
 ### aarch64 arm64位
 make clean
 
